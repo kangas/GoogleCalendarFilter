@@ -1,8 +1,8 @@
 import config
 
-def test():
+def main():
     config.test()
     raise NotImplementedError()
 
 if __name__ == "__main__":
-    test()
+    main()
