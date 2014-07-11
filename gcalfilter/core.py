@@ -60,18 +60,15 @@ def refetch_calendars(db):
 def save_feed_result(db, result, feed_name):
     parsed = parse_feed(result)
 
+    bulk = db.cal[feed_name].initialize_unordered_bulk_op()
+
     for item in parsed:
-        pprint.pprint(item)
-        print "-------- JUST THE FIRST ------"
-        break
+        # pprint.pprint(item['_id'])
+        bulk.find({'_id': item['_id']}).upsert().replace_one(item)
 
-    # do a straight bulk insert
-    db.cal[feed_name].insert(parsed)
+    results = bulk.execute()
+    pprint.pprint(results)
 
-    # FIXME: do a bulk upsert
-    # for item in parsed:
-    #     bulk.
-    # db.cal[feed_name].upsert(parsed)
     print "Inserted %s entries to cal.%s" % (len(parsed), feed_name)
 
 
