@@ -24,6 +24,10 @@ def init_caches(db):
 
     debug("team_cache: %s entries" % len(_team_cache))
 
+
+## ------------------ feed processing -------------------
+
+
 def normalize_feed_url(url):
     """Nuke query parameters, nothing else"""
     url = url.split('?')[0]
@@ -80,7 +84,9 @@ def parse_feed(feed_data):
         return x
     return [munge(x) for x in feed_data['data']['items']]
 
+
 ## ------------------ report generation -------------------
+
 
 def is_user_in_team(user, team):
     if len(_team_cache) == 0:
@@ -99,8 +105,8 @@ def entry_when(e):
     end = e['when'][0]["end"]
     return (start, end)
 
-def entry_group_by_date(entries):
-    raise NotImplementedError()
+def entry_sort_by_date(entries):
+    return sorted(entries, key=lambda e: entry_when(e)[0])
 
 def filter_calendar_by_team(calendar, team):
     return (entry for entry in calendar
@@ -113,7 +119,9 @@ def run_report_plaintext(db, team, calendar):
     vacations = db.cal[calendar].find()
     report = ""
     
-    for entry in filter_calendar_by_team(vacations, team):
+    entries = filter_calendar_by_team(vacations, team)
+
+    for entry in entry_sort_by_date(entries):
         report += plaintext_report_entry(entry, team)
         report += '\n'
 
