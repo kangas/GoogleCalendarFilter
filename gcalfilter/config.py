@@ -4,8 +4,8 @@ import yaml
 
 DEFAULT_CONFIG = """
 host: localhost
-port: 27000
-db: gcalfilter
+port: 27017
+db: gcal
 """
 
 DEFAULT_CONFIGFILE = "~/.gcalfilter.yaml"
@@ -22,8 +22,7 @@ def merge(user, default):
                 user[k] = merge(user[k], v)
     return user
 
-
-def getConfig():
+def get():
     default_conf = yaml.load(DEFAULT_CONFIG)
     result = default_conf
 
@@ -32,7 +31,7 @@ def getConfig():
         path = os.path.expanduser(configfile)
         with open(path) as f:
             debug("loaded configfile: %s" % path)
-            user_conf = yaml.load(f)
+            user_conf = yaml.safe_load(f)
             result = merge(user_conf, default_conf)
     except IOError:
         pass
@@ -42,9 +41,8 @@ def getConfig():
 
 def test():
     debug("-- config test")
-    data = getConfig()
+    data = get()
     debug(pprint.pformat(data))
-
 
 if __name__ == "__main__":
     test()
