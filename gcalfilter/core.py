@@ -2,6 +2,7 @@ import datetime
 import requests
 import pprint
 import pymongo
+import time
 import urllib
 import urlparse
 
@@ -10,7 +11,8 @@ import config
 _team_cache = {}
 
 def debug(msg):
-    print "#DBG "+ str(msg)
+    if False:
+        print "#DBG "+ str(msg)
 
 def getdb():
     cfg = config.get()
@@ -58,7 +60,8 @@ def refetch_calendars(db):
         save_feed_result(db, result, feed_name)
 
 def save_feed_result(db, result, feed_name):
-    parsed = parse_feed(result)
+    now = int(time.time())
+    parsed = parse_feed(result, now)
 
     bulk = db.cal[feed_name].initialize_unordered_bulk_op()
 
@@ -66,18 +69,24 @@ def save_feed_result(db, result, feed_name):
         # pprint.pprint(item['_id'])
         bulk.find({'_id': item['_id']}).upsert().replace_one(item)
 
-    results = bulk.execute()
-    pprint.pprint(results)
+    result = bulk.execute()
+    pprint.pprint(result)
 
     print "Inserted %s entries to cal.%s" % (len(parsed), feed_name)
+    print "Pruning old records"
+    result = db.cal[feed_name].remove({'fetchdate': {'$exists': False}})
+    pprint.pprint(result)
+    result = db.cal[feed_name].remove({'fetchdate': {'$lt': now}})
+    pprint.pprint(result)
 
 
-def parse_feed(feed_data):
+def parse_feed(feed_data, fetchdate):
     """Returns iterator over items, remapping some elements
     """
     def munge(x):
         x['_id'] = x['id']
         del x['id']
+        x['fetchdate'] = fetchdate
         return x
     return [munge(x) for x in feed_data['data']['items']]
 
