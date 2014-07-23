@@ -143,13 +143,17 @@ def entries_group_by_weeks(raw_entries, num_weeks):
     select_0 = lambda x: x[0]
     grouped = itertools.groupby(week_events, select_0)
     
+    def _week_sort_by(x):
+        (ds, event) = x
+        return (min(ds), len(ds))
+
     for (week, igroup) in grouped:
         events = [g[1] for g in igroup]
 
         ## Keep only dates in this week
-        ## FIXME: dedup multiple events from same user
-        z = [(week.intersection( e['dateset'] ), e) for e in events]
-        z = sorted(z, key=lambda x: min(x[0]))
+        ## FIXME: dedup multiple events from same user?
+        z = [( week.intersection(e['dateset']), e) for e in events]
+        z = sorted(z, key=_week_sort_by)
 
         yield (week, z)
 
@@ -163,10 +167,10 @@ def run_report_plaintext(db, team, calendar, num_weeks=8):
     select_0 = lambda x: x[0]
 
     report = ""
-    for (week, entries) in grouped:
+    for n, (week, entries) in enumerate(grouped):
         report += "\n"
-        report += "==== Week of: %s ============================\n" % \
-            week.prettyweek()
+        report += "==== Week %d: %s ============================\n" % \
+            (n ,week.prettyweek())
         report += "\n"
 
         for (dates, entry) in entries:
